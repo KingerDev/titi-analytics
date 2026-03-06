@@ -19,7 +19,11 @@
       "Bash(php artisan cache:clear)",
       "Bash(php artisan notify:new-activity)",
       "Bash(php artisan tinker --execute=\"config\\([''analytics.notify_email'' => ''test@test.com'']\\); \\\\Illuminate\\\\Support\\\\Facades\\\\Cache::forget\\(''notify_last_order_id''\\); \\\\Illuminate\\\\Support\\\\Facades\\\\Cache::forget\\(''notify_last_customer_id''\\); echo ''cache vymazaná'';\")",
-      "Bash(ANALYTICS_NOTIFY_EMAIL=test@test.com php artisan notify:new-activity)"
+      "Bash(ANALYTICS_NOTIFY_EMAIL=test@test.com php artisan notify:new-activity)",
+      "Bash(php artisan route:list --path=notifications)",
+      "Bash(php artisan tinker --execute=\"echo implode\\('', '', config\\(''analytics.excluded_customer_ids''\\)\\);\")",
+      "Bash(git add app/Http/Controllers/DashboardController.php app/Http/Controllers/NotificationController.php app/Http/Controllers/ObjednavkyController.php app/Http/Controllers/RegistracieController.php app/Http/Controllers/ZakaznikController.php config/analytics.php resources/js/Pages/Dashboard.vue)",
+      "Bash(git commit:*)"
     ]
   }
 }
