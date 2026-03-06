@@ -7,12 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
-    /**
-     * Polling endpoint — vracia nové objednávky a registrácie od posledného volania.
-     * JavaScript posiela posledné známe max ID, server vráti všetko novšie.
-     */
     public function poll(Request $request)
     {
+        $excluded        = config('analytics.excluded_customer_ids', []);
         $sinceOrderId    = (int) $request->input('since_order_id', 0);
         $sinceCustomerId = (int) $request->input('since_customer_id', 0);
 
@@ -21,8 +18,8 @@ class NotificationController extends Controller
             return response()->json([
                 'orders'          => [],
                 'registrations'   => [],
-                'max_order_id'    => (int) (DB::table('titi_order')->max('order_id') ?? 0),
-                'max_customer_id' => (int) (DB::table('titi_customer')->max('customer_id') ?? 0),
+                'max_order_id'    => (int) (DB::table('titi_order')->whereNotIn('customer_id', $excluded)->max('order_id') ?? 0),
+                'max_customer_id' => (int) (DB::table('titi_customer')->whereNotIn('customer_id', $excluded)->max('customer_id') ?? 0),
             ]);
         }
 
@@ -30,6 +27,7 @@ class NotificationController extends Controller
         $newOrders = DB::table('titi_order as o')
             ->leftJoin('titi_customer as c', 'o.customer_id', '=', 'c.customer_id')
             ->where('o.order_id', '>', $sinceOrderId)
+            ->whereNotIn('o.customer_id', $excluded)
             ->select(
                 'o.order_id',
                 'o.total_sdph',
@@ -42,6 +40,7 @@ class NotificationController extends Controller
         // Nové registrácie
         $newRegistrations = DB::table('titi_customer')
             ->where('customer_id', '>', $sinceCustomerId)
+            ->whereNotIn('customer_id', $excluded)
             ->select('customer_id', 'firstname', 'lastname', 'email')
             ->orderBy('customer_id')
             ->limit(10)

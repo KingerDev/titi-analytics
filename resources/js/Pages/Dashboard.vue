@@ -109,7 +109,7 @@
                         <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Objednávky</h3>
                         <div class="h-40 flex items-end gap-px">
                             <template v-for="(item, i) in objednavkyChart" :key="i">
-                                <div class="flex-1 group relative">
+                                <div class="flex-1 h-full group relative flex items-end">
                                     <div
                                         class="w-full bg-indigo-500 dark:bg-indigo-600 rounded-t-sm min-h-[2px] hover:bg-indigo-400 transition-colors"
                                         :style="{ height: `${item.height}%` }"
@@ -127,7 +127,7 @@
                         <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Registrácie</h3>
                         <div class="h-40 flex items-end gap-px">
                             <template v-for="(item, i) in registracieChart" :key="i">
-                                <div class="flex-1 group relative">
+                                <div class="flex-1 h-full group relative flex items-end">
                                     <div
                                         class="w-full bg-green-500 dark:bg-green-600 rounded-t-sm min-h-[2px] hover:bg-green-400 transition-colors"
                                         :style="{ height: `${item.height}%` }"

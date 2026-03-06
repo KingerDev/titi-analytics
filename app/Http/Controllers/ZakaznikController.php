@@ -10,6 +10,8 @@ class ZakaznikController extends Controller
 {
     public function index(Request $request)
     {
+        $excluded = config('analytics.excluded_customer_ids', []);
+
         $query = DB::table('titi_customer as c')
             ->select(
                 'c.customer_id',
@@ -24,6 +26,7 @@ class ZakaznikController extends Controller
                 DB::raw('COALESCE(SUM(o.total_sdph), 0) as celkova_suma')
             )
             ->leftJoin('titi_order as o', 'c.customer_id', '=', 'o.customer_id')
+            ->whereNotIn('c.customer_id', $excluded)
             ->groupBy('c.customer_id', 'c.firstname', 'c.lastname', 'c.email', 'c.active', 'c.google_id', 'c.apple_id', 'c.date_added');
 
         if ($request->filled('search')) {
@@ -60,6 +63,12 @@ class ZakaznikController extends Controller
 
     public function show(int $id)
     {
+        $excluded = config('analytics.excluded_customer_ids', []);
+
+        if (in_array($id, $excluded)) {
+            abort(404);
+        }
+
         $zakaznik = DB::table('titi_customer')
             ->where('customer_id', $id)
             ->select('customer_id', 'firstname', 'lastname', 'email', 'active', 'google_id', 'apple_id', 'date_added', 'points', 'mobil')

@@ -11,6 +11,8 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        $excluded = config('analytics.excluded_customer_ids', []);
+
         // Aktuálne obdobie — default: posledných 30 dní
         if ($request->filled('date_from') || $request->filled('date_to')) {
             $dateFrom = $request->filled('date_from')
@@ -25,8 +27,8 @@ class DashboardController extends Controller
         }
 
         // Predchádzajúce obdobie (rovnaká dĺžka, posunutá dozadu)
-        $dtFrom     = new \DateTime($dateFrom);
-        $dtTo       = new \DateTime($dateTo);
+        $dtFrom       = new \DateTime($dateFrom);
+        $dtTo         = new \DateTime($dateTo);
         $durationDays = (int) $dtFrom->diff($dtTo)->days;
 
         $prevTo   = (clone $dtFrom)->modify('-1 second');
@@ -35,9 +37,9 @@ class DashboardController extends Controller
         $prevDateFrom = $prevFrom->format('Y-m-d H:i:s');
         $prevDateTo   = $prevTo->format('Y-m-d H:i:s');
 
-        // Globálne štatistiky
-        $totalZakaznikov   = EshopCustomer::count();
-        $aktivovanych      = EshopCustomer::where('active', 1)->count();
+        // Globálne štatistiky (bez vylúčených)
+        $totalZakaznikov   = EshopCustomer::whereNotIn('customer_id', $excluded)->count();
+        $aktivovanych      = EshopCustomer::whereNotIn('customer_id', $excluded)->where('active', 1)->count();
         $aktualneProduktov = DB::table('titi_product')
             ->where('status', 1)->where('titi_eshop', 1)
             ->where('mopcena', '>', 0)->where('quantity', '>', 1)
@@ -45,40 +47,48 @@ class DashboardController extends Controller
 
         // Aktuálne obdobie
         $objednavkyObdobi = DB::table('titi_order')
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$dateFrom, $dateTo])->count();
         $trzbaObdobi = (float) DB::table('titi_order')
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$dateFrom, $dateTo])->sum('total_sdph');
         $noveRegistracie = DB::table('titi_customer')
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$dateFrom, $dateTo])->count();
         $priemObjednavky = $objednavkyObdobi > 0
             ? round($trzbaObdobi / $objednavkyObdobi, 2) : 0;
 
         // Predchádzajúce obdobie
         $prevObjednavky = DB::table('titi_order')
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$prevDateFrom, $prevDateTo])->count();
         $prevTrzba = (float) DB::table('titi_order')
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$prevDateFrom, $prevDateTo])->sum('total_sdph');
         $prevRegistracie = DB::table('titi_customer')
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$prevDateFrom, $prevDateTo])->count();
         $prevPriem = $prevObjednavky > 0
             ? round($prevTrzba / $prevObjednavky, 2) : 0;
 
         // Trendy (% zmena)
         $trends = [
-            'objednavky' => $this->trend($objednavkyObdobi, $prevObjednavky),
-            'trzba'      => $this->trend($trzbaObdobi, $prevTrzba),
-            'registracie'=> $this->trend($noveRegistracie, $prevRegistracie),
-            'priem'      => $this->trend($priemObjednavky, $prevPriem),
+            'objednavky'  => $this->trend($objednavkyObdobi, $prevObjednavky),
+            'trzba'       => $this->trend($trzbaObdobi, $prevTrzba),
+            'registracie' => $this->trend($noveRegistracie, $prevRegistracie),
+            'priem'       => $this->trend($priemObjednavky, $prevPriem),
         ];
 
         // Trend grafy
         $objednavkyTrend = DB::table('titi_order')
             ->select(DB::raw('DATE(date_added) as den, COUNT(*) as pocet, SUM(total_sdph) as trzba'))
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$dateFrom, $dateTo])
             ->groupBy('den')->orderBy('den')->get();
 
         $registracieTrend = DB::table('titi_customer')
             ->select(DB::raw('DATE(date_added) as den, COUNT(*) as pocet'))
+            ->whereNotIn('customer_id', $excluded)
             ->whereBetween('date_added', [$dateFrom, $dateTo])
             ->groupBy('den')->orderBy('den')->get();
 
@@ -86,6 +96,7 @@ class DashboardController extends Controller
         $topProdukty = DB::table('titi_order_product as op')
             ->join('titi_order as o', 'op.order_id', '=', 'o.order_id')
             ->leftJoin('titi_product_description as pd', 'op.product_id', '=', 'pd.product_id')
+            ->whereNotIn('o.customer_id', $excluded)
             ->whereBetween('o.date_added', [$dateFrom, $dateTo])
             ->groupBy('op.product_id', 'pd.name')
             ->select(
@@ -99,6 +110,7 @@ class DashboardController extends Controller
         // Top 10 zákazníkov
         $topZakaznici = DB::table('titi_order as o')
             ->join('titi_customer as c', 'o.customer_id', '=', 'c.customer_id')
+            ->whereNotIn('o.customer_id', $excluded)
             ->whereBetween('o.date_added', [$dateFrom, $dateTo])
             ->groupBy('o.customer_id', 'c.firstname', 'c.lastname', 'c.email')
             ->select(
@@ -135,7 +147,7 @@ class DashboardController extends Controller
     private function trend(float|int $current, float|int $prev): ?float
     {
         if ($prev == 0) {
-            return $current > 0 ? null : null; // nedostatok dát na porovnanie
+            return null;
         }
         return round((($current - $prev) / $prev) * 100, 1);
     }

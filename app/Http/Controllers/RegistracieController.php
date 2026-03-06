@@ -10,8 +10,11 @@ class RegistracieController extends Controller
 {
     public function index(Request $request)
     {
+        $excluded = config('analytics.excluded_customer_ids', []);
+
         $query = EshopCustomer::query()
-            ->select('customer_id', 'firstname', 'lastname', 'email', 'active', 'google_id', 'apple_id', 'date_added');
+            ->select('customer_id', 'firstname', 'lastname', 'email', 'active', 'google_id', 'apple_id', 'date_added')
+            ->whereNotIn('customer_id', $excluded);
 
         if ($request->filled('activated') && $request->activated !== 'all') {
             $query->where('active', (int) $request->activated);
@@ -40,13 +43,15 @@ class RegistracieController extends Controller
 
         $zakaznici = $query->orderBy($sort, $direction)->paginate(20)->withQueryString();
 
+        $base = EshopCustomer::whereNotIn('customer_id', $excluded);
+
         $stats = [
-            'celkom'          => EshopCustomer::count(),
-            'aktivovanych'    => EshopCustomer::where('active', 1)->count(),
-            'neaktivovanych'  => EshopCustomer::where('active', 0)->count(),
-            'email'           => EshopCustomer::whereNull('google_id')->whereNull('apple_id')->count(),
-            'google'          => EshopCustomer::whereNotNull('google_id')->count(),
-            'apple'           => EshopCustomer::whereNotNull('apple_id')->count(),
+            'celkom'         => (clone $base)->count(),
+            'aktivovanych'   => (clone $base)->where('active', 1)->count(),
+            'neaktivovanych' => (clone $base)->where('active', 0)->count(),
+            'email'          => (clone $base)->whereNull('google_id')->whereNull('apple_id')->count(),
+            'google'         => (clone $base)->whereNotNull('google_id')->count(),
+            'apple'          => (clone $base)->whereNotNull('apple_id')->count(),
         ];
 
         return Inertia::render('Registracie/Index', [

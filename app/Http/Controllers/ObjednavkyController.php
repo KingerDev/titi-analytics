@@ -10,8 +10,11 @@ class ObjednavkyController extends Controller
 {
     public function index(Request $request)
     {
+        $excluded = config('analytics.excluded_customer_ids', []);
+
         $query = DB::table('titi_order as o')
             ->leftJoin('titi_customer as c', 'o.customer_id', '=', 'c.customer_id')
+            ->whereNotIn('o.customer_id', $excluded)
             ->select(
                 'o.order_id',
                 'o.date_added',
