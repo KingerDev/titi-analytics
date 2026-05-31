@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LlmVisitsController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ObjednavkyController;
@@ -16,7 +17,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Analytika (chránené)
 Route::middleware('analytics.auth')->group(function () {
-    Route::get('/', fn() => redirect()->route('dashboard'));
+    Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/registracie', [RegistracieController::class, 'index'])->name('registracie');
@@ -29,6 +30,8 @@ Route::middleware('analytics.auth')->group(function () {
 
     Route::get('/zakaznici', [ZakaznikController::class, 'index'])->name('zakaznici');
     Route::get('/zakaznici/{id}', [ZakaznikController::class, 'show'])->name('zakaznici.show');
+
+    Route::get('/llm-navstevy', [LlmVisitsController::class, 'index'])->name('llm-visits');
 
     // Polling endpoint pre in-app notifikácie
     Route::get('/notifications/poll', [NotificationController::class, 'poll'])->name('notifications.poll');
