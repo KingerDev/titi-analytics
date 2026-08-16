@@ -16,6 +16,16 @@
                             class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                     </div>
                     <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Metóda registrácie</label>
+                        <select v-model="filters.method" @change="applyFilters"
+                            class="text-sm rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            <option value="all">Všetky</option>
+                            <option value="email">Email</option>
+                            <option value="google">Google</option>
+                            <option value="apple">Apple</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Aktivovaný</label>
                         <select v-model="filters.activated" @change="applyFilters"
                             class="text-sm rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
@@ -107,6 +117,7 @@ const props = defineProps({
 const filters = reactive({
     search:    props.filters?.search    ?? '',
     activated: props.filters?.activated ?? 'all',
+    method:    props.filters?.method    ?? 'all',
     sort:      props.filters?.sort      ?? 'date_added',
     direction: props.filters?.direction ?? 'desc',
 })
@@ -122,7 +133,7 @@ function applyFilters() {
 }
 
 function resetFilters() {
-    Object.assign(filters, { search: '', activated: 'all', sort: 'date_added', direction: 'desc' })
+    Object.assign(filters, { search: '', activated: 'all', method: 'all', sort: 'date_added', direction: 'desc' })
     applyFilters()
 }
 

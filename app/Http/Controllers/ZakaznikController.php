@@ -42,6 +42,28 @@ class ZakaznikController extends Controller
             $query->where('c.active', (int) $request->activated);
         }
 
+        // Metóda registrácie — rovnaká precedencia ako badge vo Vue:
+        // google > apple > email (26 zákazníkov má vyplnené oboje ID).
+        $method = $request->input('method');
+
+        if ($method && $method !== 'all') {
+            $hasGoogle = fn ($q) => $q->whereNotNull('c.google_id')->where('c.google_id', '!=', '');
+            $hasApple  = fn ($q) => $q->whereNotNull('c.apple_id')->where('c.apple_id', '!=', '');
+
+            match ($method) {
+                'google' => $query->where($hasGoogle),
+                'apple'  => $query->where($hasApple)->where(function ($q) {
+                    $q->whereNull('c.google_id')->orWhere('c.google_id', '=', '');
+                }),
+                'email'  => $query->where(function ($q) {
+                    $q->whereNull('c.google_id')->orWhere('c.google_id', '=', '');
+                })->where(function ($q) {
+                    $q->whereNull('c.apple_id')->orWhere('c.apple_id', '=', '');
+                }),
+                default  => null,
+            };
+        }
+
         // Zoradenie
         $allowedSorts = ['date_added', 'celkova_suma', 'pocet_objednavok'];
         $sort      = in_array($request->sort, $allowedSorts) ? $request->sort : 'date_added';
@@ -57,7 +79,7 @@ class ZakaznikController extends Controller
 
         return Inertia::render('Zakaznici/Index', [
             'zakaznici' => $zakaznici,
-            'filters'   => $request->only(['search', 'activated', 'sort', 'direction']),
+            'filters'   => $request->only(['search', 'activated', 'method', 'sort', 'direction']),
         ]);
     }
 
