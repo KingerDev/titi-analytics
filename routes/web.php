@@ -30,6 +30,9 @@ Route::middleware('analytics.auth')->group(function () {
 
     Route::get('/zakaznici', [ZakaznikController::class, 'index'])->name('zakaznici');
     Route::get('/zakaznici/{id}', [ZakaznikController::class, 'show'])->name('zakaznici.show');
+    Route::post('/zakaznici/{id}/prehodit-meno', [ZakaznikController::class, 'swapName'])
+        ->whereNumber('id')
+        ->name('zakaznici.swap-name');
 
     Route::get('/llm-navstevy', [LlmVisitsController::class, 'index'])->name('llm-visits');
 

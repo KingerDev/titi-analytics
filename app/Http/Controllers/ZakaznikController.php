@@ -102,4 +102,38 @@ class ZakaznikController extends Controller
             'stats'      => $stats,
         ]);
     }
+
+    /**
+     * Prehodí meno a priezvisko zákazníka.
+     *
+     * Rieši chybu z Apple auth registrácie, kde sa firstname/lastname
+     * zapisovali opačne. Zámena je idempotentná — druhý klik vráti pôvodný stav.
+     * Mení iba titi_customer, adresy (titi_address) zostávajú nedotknuté.
+     */
+    public function swapName(int $id)
+    {
+        $excluded = config('analytics.excluded_customer_ids', []);
+
+        if (in_array($id, $excluded)) {
+            abort(404);
+        }
+
+        $zakaznik = DB::table('titi_customer')
+            ->where('customer_id', $id)
+            ->select('customer_id', 'firstname', 'lastname')
+            ->first();
+
+        if (! $zakaznik) {
+            abort(404);
+        }
+
+        DB::table('titi_customer')
+            ->where('customer_id', $id)
+            ->update([
+                'firstname' => $zakaznik->lastname,
+                'lastname'  => $zakaznik->firstname,
+            ]);
+
+        return back(303);
+    }
 }

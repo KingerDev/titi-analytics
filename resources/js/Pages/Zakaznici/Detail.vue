@@ -34,6 +34,14 @@
                         <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Profil zákazníka</h3>
                         <div class="space-y-3">
                             <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Meno</span>
+                                <span class="text-sm text-gray-900 dark:text-white">{{ zakaznik.firstname }}</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Priezvisko</span>
+                                <span class="text-sm text-gray-900 dark:text-white">{{ zakaznik.lastname }}</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
                                 <span class="text-sm text-gray-900 dark:text-white">{{ zakaznik.email }}</span>
                             </div>
@@ -49,6 +57,13 @@
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Metóda reg.</span>
                                 <StatusBadge :value="registrationMethod" type="method" />
                             </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <SwapNameButton :customer-id="zakaznik.customer_id" variant="full" />
+                            <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                                Opraví prehodené meno/priezvisko z Apple registrácie. Ďalší klik zmenu vráti späť.
+                            </p>
                         </div>
                     </div>
 
@@ -109,6 +124,7 @@ import { Head, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import StatsCard from '@/Components/StatsCard.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
+import SwapNameButton from '@/Components/SwapNameButton.vue'
 
 const props = defineProps({
     zakaznik: Object,

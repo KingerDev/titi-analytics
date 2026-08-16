@@ -48,7 +48,10 @@
                             <tr v-for="z in zakaznici.data" :key="z.customer_id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                 <td class="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                                    {{ z.firstname }} {{ z.lastname }}
+                                    <div class="flex items-center gap-1.5">
+                                        <span>{{ z.firstname }} {{ z.lastname }}</span>
+                                        <SwapNameButton :customer-id="z.customer_id" />
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ z.email }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ formatDate(z.date_added) }}</td>
@@ -94,6 +97,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import Pagination from '@/Components/Pagination.vue'
 import SortableHeader from '@/Components/SortableHeader.vue'
+import SwapNameButton from '@/Components/SwapNameButton.vue'
 
 const props = defineProps({
     zakaznici: Object,
