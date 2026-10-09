@@ -7,6 +7,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ObjednavkyController;
 use App\Http\Controllers\ProduktController;
 use App\Http\Controllers\RegistracieController;
+use App\Http\Controllers\VyhladavanieController;
 use App\Http\Controllers\ZakaznikController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,12 @@ Route::middleware('analytics.auth')->group(function () {
         ->name('zakaznici.swap-name');
 
     Route::get('/llm-navstevy', [LlmVisitsController::class, 'index'])->name('llm-visits');
+
+    Route::get('/vyhladavanie', [VyhladavanieController::class, 'index'])->name('vyhladavanie');
+    Route::get('/vyhladavanie/live', [VyhladavanieController::class, 'live'])->name('vyhladavanie.live');
+    Route::get('/vyhladavanie/{id}/porovnanie', [VyhladavanieController::class, 'porovnanie'])
+        ->whereNumber('id')
+        ->name('vyhladavanie.porovnanie');
 
     // Polling endpoint pre in-app notifikácie
     Route::get('/notifications/poll', [NotificationController::class, 'poll'])->name('notifications.poll');
