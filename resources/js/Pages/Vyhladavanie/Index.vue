@@ -51,10 +51,10 @@
                 <!-- Karty -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatsCard label="Hľadaní" :value="stats.total" :trend="trends.total"
-                        sublabel="Web aj appka, prvé načítanie výsledkov"
+                        :sublabel="`Web aj appka · z toho našepkávač ${stats.suggest}`"
                         icon-bg="bg-indigo-50 dark:bg-indigo-900/30" icon-color="text-indigo-600 dark:text-indigo-400" />
                     <StatsCard label="Bez výsledkov" :value="stats.zero" :trend="trends.zero"
-                        :sublabel="stats.zeroRate !== null ? `${stats.zeroRate} % hľadaní` : 'Žiadne hľadania'"
+                        :sublabel="stats.zeroRate !== null ? `${stats.zeroRate} % hľadaní · ani AI nič: ${stats.nobody}` : 'Žiadne hľadania'"
                         icon-bg="bg-red-50 dark:bg-red-900/30" icon-color="text-red-600 dark:text-red-400" />
                     <StatsCard label="AI by zachránilo" :value="stats.rescuable"
                         :sublabel="stats.zero ? `${pct(stats.rescuable, stats.zero)} % prázdnych hľadaní · zobrazené ${stats.shown}×` : 'Z prázdnych hľadaní'"
@@ -68,7 +68,10 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="font-semibold text-gray-900 dark:text-white">Záujem o výsledky</h3>
-                        <p class="text-xs text-gray-400 mt-0.5">Otvorenie produktu a pridanie do košíka priamo z výsledkov hľadania</p>
+                        <p class="text-xs text-gray-400 mt-0.5">
+                            Otvorenie produktu a pridanie do košíka priamo z výsledkov hľadania.
+                            V našepkávači zákazník vybral {{ events.suggest.click }}× produkt a {{ events.suggest.category }}× kategóriu.
+                        </p>
                     </div>
                     <table class="min-w-full">
                         <thead class="bg-gray-50 dark:bg-gray-700/50">
@@ -238,7 +241,12 @@
                                         class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors duration-1000"
                                         :class="{ 'bg-green-50 dark:bg-green-900/20': freshIds.has(r.id) }">
                                         <td class="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">{{ formatTime(r.created_at) }}</td>
-                                        <td class="px-4 py-2.5 text-sm text-gray-900 dark:text-white">{{ r.query }}</td>
+                                        <td class="px-4 py-2.5 text-sm text-gray-900 dark:text-white">
+                                            {{ r.query }}
+                                            <span v-if="r.channel === 'suggest'"
+                                                class="ml-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                                                title="Našepkávač – zákazník neotvoril stránku s výsledkami">našepkávač</span>
+                                        </td>
                                         <td class="px-4 py-2.5 text-sm text-right tabular-nums"
                                             :class="r.results_count === 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-900 dark:text-white'">{{ r.results_count }}</td>
                                         <td class="px-4 py-2.5 text-sm text-right tabular-nums text-gray-500 dark:text-gray-400">

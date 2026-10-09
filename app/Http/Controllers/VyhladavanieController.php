@@ -11,7 +11,8 @@ use Inertia\Inertia;
  * Hľadania zákazníkov na webe a v appke (titi_search_log) a porovnanie s AI agentom,
  * ktorý beží v tieni (TITI_AI_SEARCH_RESCUE=shadow): čo web nenašiel, čo by agent
  * zachránil, kde sa výsledky líšia, kliky/košík podľa zdroja (titi_search_event)
- * a náklady agenta.
+ * a náklady agenta. channel: results = stránka s výsledkami, suggest = našepkávač
+ * (výber produktu/kategórie priamo v ňom, alebo nič nenašiel a zákazník odišiel).
  */
 class VyhladavanieController extends Controller
 {
@@ -27,6 +28,7 @@ class VyhladavanieController extends Controller
         $prevBase = DB::table('titi_search_log')->whereBetween('created_at', [$prevDateFrom, $prevDateTo]);
 
         $total = (clone $base)->count();
+        $suggest = (clone $base)->where('channel', 'suggest')->count();
         $zero = (clone $base)->where('results_count', 0)->count();
         $prevTotal = (clone $prevBase)->count();
         $prevZero = (clone $prevBase)->where('results_count', 0)->count();
@@ -34,6 +36,7 @@ class VyhladavanieController extends Controller
         $ai = (clone $base)->whereNotNull('ai_count')->selectRaw('
             COUNT(*) as checked,
             SUM(results_count = 0 AND ai_count > 0) as rescuable,
+            SUM(results_count = 0 AND ai_count = 0) as nobody,
             SUM(ai_shown > 0) as shown,
             SUM(ai_cost) as cost,
             AVG(ai_ms) as avg_ms,
@@ -67,10 +70,12 @@ class VyhladavanieController extends Controller
         return Inertia::render('Vyhladavanie/Index', [
             'stats' => [
                 'total' => $total,
+                'suggest' => $suggest,
                 'zero' => $zero,
                 'zeroRate' => $total ? round($zero / $total * 100, 1) : null,
                 'aiChecked' => (int) ($ai->checked ?? 0),
                 'rescuable' => (int) ($ai->rescuable ?? 0),
+                'nobody' => (int) ($ai->nobody ?? 0), // nenašiel ani web, ani AI
                 'shown' => (int) ($ai->shown ?? 0),
                 'aiCost' => round((float) ($ai->cost ?? 0), 4),
                 'aiAvgMs' => $ai->avg_ms !== null ? (int) round($ai->avg_ms) : null,
@@ -154,11 +159,14 @@ class VyhladavanieController extends Controller
             ->when($sinceId > 0, fn ($q) => $q->where('id', '>', $sinceId))
             ->orderByDesc('id')
             ->limit(self::LIVE_LIMIT)
-            ->get(['id', 'query', 'results_count', 'ai_count', 'ai_shown', 'ai_ms', 'ai_error', 'created_at'])
+            ->get(['id', 'query', 'results_count', 'channel', 'ai_count', 'ai_shown', 'ai_ms', 'ai_error', 'created_at'])
             ->all();
     }
 
-    /** Kliky a pridania do košíka z výsledkov hľadania podľa zdroja (web / ai). */
+    /**
+     * Kliky a pridania do košíka z výsledkov hľadania podľa zdroja (web / ai) a výbery
+     * v našepkávači (suggest: click = produkt, category = kategória).
+     */
     private function eventsBySource(string $dateFrom, string $dateTo): array
     {
         $rows = DB::table('titi_search_event as e')
@@ -169,8 +177,8 @@ class VyhladavanieController extends Controller
             ->get();
 
         $out = [];
-        foreach (['web', 'ai'] as $source) {
-            foreach (['click', 'cart'] as $action) {
+        foreach (['web' => ['click', 'cart'], 'ai' => ['click', 'cart'], 'suggest' => ['click', 'category']] as $source => $actions) {
+            foreach ($actions as $action) {
                 $row = $rows->first(fn ($r) => $r->source === $source && $r->action === $action);
                 $out[$source][$action] = (int) ($row->pocet ?? 0);
                 $out[$source][$action.'_hladani'] = (int) ($row->hladani ?? 0);
