@@ -23,6 +23,7 @@ class VyhladavanieTest extends TestCase
             $t->id();
             $t->string('query');
             $t->unsignedInteger('results_count');
+            $t->string('channel')->default('results');
             $t->timestamp('created_at')->useCurrent();
             $t->text('web_product_ids')->nullable();
             $t->unsignedSmallInteger('ai_count')->nullable();
@@ -59,7 +60,15 @@ class VyhladavanieTest extends TestCase
             ['id' => 3, 'query' => 'pentel', 'results_count' => 0, 'created_at' => $now,
                 'web_product_ids' => '', 'ai_count' => 0, 'ai_product_ids' => '', 'ai_ms' => 900, 'ai_cached' => 0, 'ai_cost' => 0.0001],
         ]);
+        // našepkávač: nič nenašiel a zákazník odišiel (AI v tieni tiež nič) + výber produktu
+        DB::table('titi_search_log')->insert([
+            ['id' => 4, 'query' => 'xyzq', 'results_count' => 0, 'channel' => 'suggest', 'created_at' => $now,
+                'ai_count' => 0, 'ai_product_ids' => '', 'ai_ms' => 700, 'ai_cached' => 0, 'ai_cost' => 0.0001],
+            ['id' => 5, 'query' => 'pero', 'results_count' => 4, 'channel' => 'suggest', 'created_at' => $now,
+                'ai_count' => null, 'ai_product_ids' => null, 'ai_ms' => null, 'ai_cached' => null, 'ai_cost' => null],
+        ]);
         DB::table('titi_search_event')->insert([
+            ['search_log_id' => 5, 'product_id' => 13, 'source' => 'suggest', 'action' => 'click'],
             ['search_log_id' => 2, 'product_id' => 20, 'source' => 'ai', 'action' => 'click'],
             ['search_log_id' => 2, 'product_id' => 20, 'source' => 'ai', 'action' => 'cart'],
             ['search_log_id' => 1, 'product_id' => 10, 'source' => 'web', 'action' => 'click'],
@@ -83,28 +92,33 @@ class VyhladavanieTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Vyhladavanie/Index')
-                ->where('stats.total', 3)
-                ->where('stats.zero', 2)
+                ->where('stats.total', 5)
+                ->where('stats.suggest', 2)
+                ->where('stats.zero', 3)
                 ->where('stats.rescuable', 1)
-                ->where('stats.aiChecked', 3)
+                ->where('stats.nobody', 2)
+                ->where('stats.aiChecked', 4)
+                ->where('events.suggest.click', 1)
+                ->where('events.suggest.category', 0)
                 ->where('events.ai.click', 1)
                 ->where('events.ai.cart', 1)
                 ->where('events.web.click', 1)
                 ->where('differences.0.query', 'papier a4 biely')
                 ->where('differences.0.zhoda', 50)
-                ->has('topZero', 2)
-                ->has('live', 3)
+                ->has('topZero', 3)
+                ->has('live', 5)
             );
     }
 
     public function test_live_returns_only_new_rows_and_today_totals(): void
     {
         $this->withSession(['analytics_authed' => true])
-            ->getJson('/vyhladavanie/live?since_id=2')
+            ->getJson('/vyhladavanie/live?since_id=3')
             ->assertOk()
-            ->assertJsonCount(1, 'rows')
-            ->assertJsonPath('rows.0.query', 'pentel')
-            ->assertJsonPath('today.hladani', 3)
+            ->assertJsonCount(2, 'rows')
+            ->assertJsonPath('rows.0.query', 'pero')
+            ->assertJsonPath('rows.0.channel', 'suggest')
+            ->assertJsonPath('today.hladani', 5)
             ->assertJsonPath('today.zachranitelnych', 1);
     }
 
