@@ -68,6 +68,7 @@ class VyhladavanieController extends Controller
             ->get();
 
         return Inertia::render('Vyhladavanie/Index', [
+            'syncCost' => $this->syncCost($dateFrom, $dateTo),
             'stats' => [
                 'total' => $total,
                 'suggest' => $suggest,
@@ -226,6 +227,28 @@ class VyhladavanieController extends Controller
         usort($out, fn ($a, $b) => [$a['zhoda'], -$a['pocet']] <=> [$b['zhoda'], -$b['pocet']]);
 
         return array_slice($out, 0, 25);
+    }
+
+    /**
+     * Náklady OpenAI na nočnú aktualizáciu produktov a kategórií (embeddingy) za obdobie
+     * z titi_ai_usage_log (zapisuje agent pri synchronizácii). Null, ak tabuľka ešte nie je.
+     */
+    private function syncCost(string $dateFrom, string $dateTo): ?array
+    {
+        try {
+            $row = DB::table('titi_ai_usage_log')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->selectRaw('COUNT(*) as behov, SUM(items) as poloziek, SUM(cost_usd) as naklady')
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return [
+            'behov' => (int) ($row->behov ?? 0),
+            'poloziek' => (int) ($row->poloziek ?? 0),
+            'naklady' => round((float) ($row->naklady ?? 0), 4),
+        ];
     }
 
     /** @return array<int, int> */
