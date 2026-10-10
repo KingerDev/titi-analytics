@@ -49,7 +49,7 @@
                 </div>
 
                 <!-- Karty -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
                     <StatsCard label="Hľadaní" :value="stats.total" :trend="trends.total"
                         :sublabel="`Web aj appka · z toho našepkávač ${stats.suggest}`"
                         icon-bg="bg-indigo-50 dark:bg-indigo-900/30" icon-color="text-indigo-600 dark:text-indigo-400" />
@@ -59,9 +59,12 @@
                     <StatsCard label="AI by zachránilo" :value="stats.rescuable"
                         :sublabel="stats.zero ? `${pct(stats.rescuable, stats.zero)} % prázdnych hľadaní · zobrazené ${stats.shown}×` : 'Z prázdnych hľadaní'"
                         icon-bg="bg-green-50 dark:bg-green-900/30" icon-color="text-green-600 dark:text-green-400" />
-                    <StatsCard label="Náklady AI" :value="usd(stats.aiCost)"
+                    <StatsCard label="Náklady AI vo vyhľadávaní" :value="usd(stats.aiCost)"
                         :sublabel="aiSublabel"
                         icon-bg="bg-purple-50 dark:bg-purple-900/30" icon-color="text-purple-600 dark:text-purple-400" />
+                    <StatsCard label="Aktualizácia produktov" :value="syncCost ? usd(syncCost.naklady) : '–'"
+                        :sublabel="syncCost ? `${syncCost.behov} behov · ${syncCost.poloziek} prepočítaných položiek` : 'Zatiaľ bez záznamu (tabuľka titi_ai_usage_log)'"
+                        icon-bg="bg-amber-50 dark:bg-amber-900/30" icon-color="text-amber-600 dark:text-amber-400" />
                 </div>
 
                 <!-- Konverzie web vs AI -->
@@ -319,6 +322,7 @@ const props = defineProps({
     differences: Array,
     live: Array,
     obdobie: Object,
+    syncCost: Object, // náklady nočnej aktualizácie produktov/kategórií, null bez tabuľky
 })
 
 const eshopBase = 'https://titi.shopweb.sk'

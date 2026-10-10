@@ -43,6 +43,14 @@ class VyhladavanieTest extends TestCase
             $t->string('action');
             $t->timestamp('created_at')->useCurrent();
         });
+        Schema::create('titi_ai_usage_log', function (Blueprint $t) {
+            $t->id();
+            $t->string('job');
+            $t->unsignedInteger('items');
+            $t->unsignedInteger('tokens');
+            $t->decimal('cost_usd', 10, 6);
+            $t->timestamp('created_at')->useCurrent();
+        });
         Schema::create('titi_product_description', function (Blueprint $t) {
             $t->unsignedInteger('product_id');
             $t->string('name');
@@ -72,6 +80,10 @@ class VyhladavanieTest extends TestCase
             ['search_log_id' => 2, 'product_id' => 20, 'source' => 'ai', 'action' => 'click'],
             ['search_log_id' => 2, 'product_id' => 20, 'source' => 'ai', 'action' => 'cart'],
             ['search_log_id' => 1, 'product_id' => 10, 'source' => 'web', 'action' => 'click'],
+        ]);
+        DB::table('titi_ai_usage_log')->insert([
+            ['job' => 'product_sync', 'items' => 120, 'tokens' => 60000, 'cost_usd' => 0.0012, 'created_at' => $now],
+            ['job' => 'category_sync', 'items' => 2, 'tokens' => 30, 'cost_usd' => 0.000001, 'created_at' => $now],
         ]);
         DB::table('titi_product_description')->insert([
             ['product_id' => 10, 'name' => 'Krabica na tortu'],
@@ -105,6 +117,8 @@ class VyhladavanieTest extends TestCase
                 ->where('events.web.click', 1)
                 ->where('differences.0.query', 'papier a4 biely')
                 ->where('differences.0.zhoda', 50)
+                ->where('syncCost.behov', 2)
+                ->where('syncCost.poloziek', 122)
                 ->has('topZero', 3)
                 ->has('live', 5)
             );
@@ -139,5 +153,15 @@ class VyhladavanieTest extends TestCase
         $this->withSession(['analytics_authed' => true])
             ->getJson('/vyhladavanie/999/porovnanie')
             ->assertNotFound();
+    }
+
+    public function test_sync_cost_is_null_without_table(): void
+    {
+        Schema::drop('titi_ai_usage_log');
+
+        $this->withSession(['analytics_authed' => true])
+            ->get('/vyhladavanie')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('syncCost', null));
     }
 }
