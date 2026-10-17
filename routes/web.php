@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiVyhladavanieController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LlmVisitsController;
 use App\Http\Controllers\LoginController;
@@ -38,6 +39,7 @@ Route::middleware('analytics.auth')->group(function () {
     Route::get('/llm-navstevy', [LlmVisitsController::class, 'index'])->name('llm-visits');
 
     Route::get('/vyhladavanie', [VyhladavanieController::class, 'index'])->name('vyhladavanie');
+    Route::get('/vyhladavanie/ai', [AiVyhladavanieController::class, 'index'])->name('vyhladavanie.ai');
     Route::get('/vyhladavanie/live', [VyhladavanieController::class, 'live'])->name('vyhladavanie.live');
     Route::get('/vyhladavanie/{id}/porovnanie', [VyhladavanieController::class, 'porovnanie'])
         ->whereNumber('id')

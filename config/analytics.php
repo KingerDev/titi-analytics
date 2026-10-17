@@ -7,4 +7,7 @@ return [
 
     // Interné/testovacie účty vylúčené z analytiky
     'excluded_customer_ids' => [2, 8169, 14595, 12453, 32, 12, 8147, 8150],
+
+    // Kurz na prepočet nákladov OpenAI (USD) na eurá – stránka AI vo vyhľadávaní
+    'usd_eur' => (float) env('ANALYTICS_USD_EUR', 0.86),
 ];

@@ -16,6 +16,7 @@ const navItems = [
     { label: 'Zákazníci', route: 'zakaznici' },
     { label: 'LLM návštevy', route: 'llm-visits' },
     { label: 'Vyhľadávanie', route: 'vyhladavanie' },
+    { label: 'AI vo vyhľadávaní', route: 'vyhladavanie.ai' },
 ]
 
 function logout() {
